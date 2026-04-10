@@ -8,8 +8,8 @@ const BALANCE_RE = /(?:New\s+)?M-PESA balance is\s+(?:KES|Ksh)\s*([\d,]+(?:\.\d+
 const DATE_TIME_RE = /on\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\s+at\s+(\d{1,2}:\d{2}\s*[AP]M)/i;
 // Transaction code: 8-12 uppercase alphanumeric at start
 const TX_CODE_RE = /^([A-Z0-9]{8,12})\s+(?:Confirmed|confirmed)/;
-// Phone number: 07XX or 2547XX or +2547XX
-const PHONE_RE = /(\+?254\d{9}|0[17]\d{8})/;
+// Phone number: full or masked (e.g. 0780***537, +254780***537)
+const PHONE_RE = /(\+?254[\d*]{9}|0[17]\d[\d*]{7})/;
 
 function parseAmount(str) {
   if (!str) return null;
@@ -79,7 +79,7 @@ function parseTransaction(sms) {
   // 1. RECEIVED MONEY
   // "Confirmed. You have received Ksh1,000.00 from JOHN DOE 0712345678 on ..."
   let m = raw.match(
-    /you have received\s+((?:KES|Ksh)\s*[\d,]+(?:\.\d+)?)\s+from\s+([A-Z][A-Z\s]+?)\s+(\+?254\d{9}|0[17]\d{8})\s+on/i
+    /you have received\s+((?:KES|Ksh)\s*[\d,]+(?:\.\d+)?)\s+from\s+([A-Z][A-Z\s]+?)\s+(\+?[\d][\d*]{8,12})\s+on/i
   );
   if (m) {
     const phoneMatch = raw.match(PHONE_RE);
@@ -95,7 +95,7 @@ function parseTransaction(sms) {
   // 2. SENT TO PERSON
   // "Confirmed. Ksh500.00 sent to JOHN DOE 0712345678 on ..."
   m = raw.match(
-    /confirmed[.\s]+((?:KES|Ksh)\s*[\d,]+(?:\.\d+)?)\s+sent to\s+([A-Z][A-Z\s]+?)\s+(\+?254\d{9}|0[17]\d{8})\s+on/i
+    /confirmed[.\s]+((?:KES|Ksh)\s*[\d,]+(?:\.\d+)?)\s+sent to\s+([A-Z][A-Z\s]+?)\s+(\+?[\d][\d*]{8,12})\s+on/i
   );
   if (m) {
     return {
