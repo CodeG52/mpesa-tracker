@@ -1,0 +1,16 @@
+{
+  "name": "mpesa-tracker",
+  "version": "1.0.0",
+  "description": "M-Pesa transaction tracker with AI financial advisor",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.3",
+    "better-sqlite3": "^11.10.0",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2"
+  }
+}

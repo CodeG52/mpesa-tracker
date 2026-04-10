@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>M-Pesa Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0a0a0f;
+      --surface:  #0d0d18;
+      --border:   #1a1a2e;
+      --green:    #4ade80;
+      --amber:    #f97316;
+      --purple:   #a78bfa;
+      --blue:     #60a5fa;
+      --warning:  #fbbf24;
+      --danger:   #f87171;
+      --text:     #e2e8f0;
+      --muted:    #8892b0;
+      --header:   'Syne', sans-serif;
+      --mono:     'DM Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ─────────────────────────────────────────── */
+
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      padding-top: env(safe-area-inset-top);
+      height: calc(52px + env(safe-area-inset-top));
+    }
+
+    .nav-logo {
+      font-family: var(--header);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--green);
+      letter-spacing: 0.06em;
+      margin-right: auto;
+    }
+
+    .nav-tabs { display: flex; gap: 3px; }
+
+    .nav-tab {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      padding: 6px 11px;
+      border-radius: 5px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.15s, color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .nav-tab.active {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    /* ── LAYOUT ──────────────────────────────────────── */
+
+    .main {
+      padding-top: calc(52px + env(safe-area-inset-top));
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── LEDGER ──────────────────────────────────────── */
+
+    .ledger-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: calc(52px + env(safe-area-inset-top));
+      background: var(--bg);
+      z-index: 10;
+    }
+
+    .totals-strip {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .total-item {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 10px;
+    }
+
+    .total-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .total-value {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .total-value.c-in   { color: var(--green); }
+    .total-value.c-out  { color: var(--amber); }
+    .total-value.c-pos  { color: var(--green); }
+    .total-value.c-neg  { color: var(--danger); }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .filter-btn.active {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: rgba(96,165,250,0.08);
+    }
+
+    .filter-select {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      padding: 5px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+
+    /* Transaction list */
+    .tx-list { padding: 0 16px 16px; }
+
+    .section-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      padding: 14px 0 6px;
+    }
+
+    .tx-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 14px;
+      margin-bottom: 7px;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .tx-card:active { transform: scale(0.99); }
+    .tx-card.is-pending { border-color: rgba(249,115,22,0.35); }
+    .tx-card.is-failed  { border-color: rgba(251,191,36,0.35); }
+
+    .tx-row1 {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 7px;
+    }
+
+    .badge {
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      padding: 3px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .badge-in   { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.25); }
+    .badge-out  { background: rgba(249,115,22,0.12); color: var(--amber); border: 1px solid rgba(249,115,22,0.25); }
+    .badge-fail { background: rgba(251,191,36,0.12); color: var(--warning); border: 1px solid rgba(251,191,36,0.25); }
+
+    .tx-amount {
+      font-size: 16px;
+      font-weight: 500;
+      margin-right: auto;
+    }
+
+    .tx-amount.c-in  { color: var(--green); }
+    .tx-amount.c-out { color: var(--amber); }
+
+    .pending-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--amber);
+      flex-shrink: 0;
+      animation: pulse-amber 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse-amber {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.75); }
+    }
+
+    .tx-counterparty {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tx-row2 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tx-date { font-size: 11px; color: var(--muted); }
+
+    .tx-cat {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(96,165,250,0.08);
+      color: var(--blue);
+      border: 1px solid rgba(96,165,250,0.18);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+
+    .tx-note {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 5px;
+    }
+
+    .failed-sms {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+      background: rgba(251,191,36,0.04);
+      border: 1px solid rgba(251,191,36,0.12);
+      border-radius: 6px;
+      padding: 8px;
+      margin-top: 8px;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+
+    .empty-icon { font-size: 40px; margin-bottom: 14px; }
+
+    .empty-text {
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .empty-text a { color: var(--blue); text-decoration: none; }
+
+    /* ── LABEL PANEL ─────────────────────────────────── */
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 200;
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    }
+
+    .overlay.open { display: block; }
+
+    .label-panel {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 201;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      padding-bottom: env(safe-area-inset-bottom);
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+      max-height: 88vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .label-panel.open { transform: translateY(0); }
+
+    .panel-handle {
+      width: 36px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 12px auto 0;
+    }
+
+    .panel-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-title {
+      font-family: var(--header);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .panel-subtitle { font-size: 12px; color: var(--muted); }
+
+    .panel-body { padding: 14px 20px 0; }
+
+    .cat-group-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin: 14px 0 7px;
+    }
+
+    .cat-group-label:first-child { margin-top: 0; }
+
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .cat-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cat-btn.selected {
+      border-color: var(--blue);
+      background: rgba(96,165,250,0.1);
+      color: var(--text);
+    }
+
+    .note-wrap { margin-top: 16px; }
+
+    .note-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .note-input {
+      width: 100%;
+      font-family: var(--mono);
+      font-size: 13px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 12px;
+      resize: none;
+      transition: border-color 0.15s;
+    }
+
+    .note-input:focus { outline: none; border-color: var(--blue); }
+
+    .panel-actions {
+      display: flex;
+      gap: 10px;
+      padding: 14px 20px 16px;
+      border-top: 1px solid var(--border);
+      margin-top: 14px;
+    }
+
+    .btn-save {
+      flex: 1;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      background: var(--blue);
+      color: #000;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-save:active { opacity: 0.8; }
+
+    .btn-skip {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      padding: 13px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-skip:active { background: var(--border); }
+
+    /* ── BUDGET ──────────────────────────────────────── */
+
+    .budget-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .budget-title {
+      font-family: var(--header);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
+    .period-select {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 7px 10px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+
+    .budget-body { padding: 16px; }
+
+    .budget-group { margin-bottom: 28px; }
+
+    .group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .group-name {
+      font-family: var(--header);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .group-total { font-size: 12px; color: var(--muted); }
+
+    .bar-row { margin-bottom: 12px; }
+
+    .bar-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 5px;
+    }
+
+    .bar-cat  { font-size: 12px; color: var(--text); }
+    .bar-amt  { font-size: 12px; color: var(--muted); }
+    .bar-pct  { font-size: 10px; color: var(--muted); margin-left: 5px; }
+
+    .bar-track {
+      height: 5px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .fill-needs    { background: var(--blue); }
+    .fill-business { background: var(--green); }
+    .fill-creative { background: var(--purple); }
+    .fill-wants    { background: var(--amber); }
+    .fill-savings  { background: var(--purple); }
+    .fill-other    { background: var(--muted); }
+
+    .net-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .net-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    .net-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    .net-value { font-size: 22px; font-weight: 500; }
+    .net-status { font-size: 13px; color: var(--muted); font-style: italic; }
+
+    /* ── ADVISOR ─────────────────────────────────────── */
+
+    .advisor-wrap {
+      padding: 20px 16px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .advisor-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .adv-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+      animation: pulse-green 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.45); }
+      50%       { box-shadow: 0 0 0 7px rgba(74,222,128,0); }
+    }
+
+    .advisor-title {
+      font-family: var(--header);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+
+    .period-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .period-btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .period-btn.active {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(74,222,128,0.07);
+    }
+
+    .snap-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    @media (min-width: 380px) {
+      .snap-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .snap-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .snap-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .snap-val {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .run-btn {
+      width: 100%;
+      font-family: var(--header);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 15px;
+      border-radius: 10px;
+      border: none;
+      background: var(--green);
+      color: #000;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: opacity 0.15s;
+      margin-bottom: 20px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .run-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .run-btn:active:not(:disabled) { opacity: 0.8; }
+
+    .adv-output {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 20px 16px;
+      display: none;
+    }
+
+    .adv-output.visible { display: block; }
+
+    .adv-text {
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .adv-text .sec-head {
+      display: block;
+      font-family: var(--header);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 20px 0 8px;
+    }
+
+    .adv-text .sec-head:first-child { margin-top: 0; }
+
+    .cursor {
+      display: inline-block;
+      width: 2px; height: 14px;
+      background: var(--green);
+      vertical-align: middle;
+      margin-left: 2px;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    .adv-error { color: var(--danger); font-size: 12px; line-height: 1.6; }
+    .adv-setup-link { color: var(--blue); text-decoration: none; display: inline-block; margin-top: 8px; font-size: 11px; }
+
+    .copy-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      text-transform: uppercase;
+      margin-top: 16px;
+      display: none;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .copy-btn.visible { display: block; }
+    .copy-btn:active { background: var(--border); color: var(--text); }
+
+    /* ── SCROLLBAR ───────────────────────────────────── */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">M-PESA</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="ledger"  onclick="switchTab('ledger')">Ledger</button>
+    <button class="nav-tab"        data-tab="budget"  onclick="switchTab('budget')">Budget</button>
+    <button class="nav-tab"        data-tab="advisor" onclick="switchTab('advisor')">Advisor</button>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- ══════════════ LEDGER TAB ══════════════ -->
+  <div id="tab-ledger" class="tab-content active">
+
+    <div class="ledger-header">
+      <div class="totals-strip">
+        <div class="total-item">
+          <div class="total-label">Total In</div>
+          <div class="total-value c-in" id="tot-in">KES 0</div>
+        </div>
+        <div class="total-item">
+          <div class="total-label">Total Out</div>
+          <div class="total-value c-out" id="tot-out">KES 0</div>
+        </div>
+        <div class="total-item">
+          <div class="total-label">Net</div>
+          <div class="total-value" id="tot-net">KES 0</div>
+        </div>
+      </div>
+      <div class="filters">
+        <button class="filter-btn active" onclick="setDir(this,'')">All</button>
+        <button class="filter-btn"        onclick="setDir(this,'in')">In</button>
+        <button class="filter-btn"        onclick="setDir(this,'out')">Out</button>
+        <select class="filter-select" id="cat-filter" onchange="setCat(this.value)">
+          <option value="">All Categories</option>
+          <optgroup label="Needs">
+            <option>Housing</option>
+            <option>Food</option>
+            <option>Transport</option>
+            <option>Utilities &amp; Data</option>
+            <option>Health</option>
+          </optgroup>
+          <optgroup label="Business">
+            <option>Freelance Income</option>
+            <option>Client Payment</option>
+            <option>VPS &amp; Tools</option>
+            <option>Marketing</option>
+            <option>Equipment</option>
+          </optgroup>
+          <optgroup label="Creative">
+            <option>Studio &amp; Production</option>
+            <option>Music Distribution</option>
+            <option>Creative Tools</option>
+          </optgroup>
+          <optgroup label="Wants">
+            <option>Social</option>
+            <option>Clothing</option>
+            <option>Impulse</option>
+          </optgroup>
+          <optgroup label="Savings">
+            <option>Emergency Fund</option>
+            <option>Investment</option>
+            <option>SACCO</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+
+    <div class="tx-list" id="tx-list">
+      <div class="empty-state">
+        <div class="empty-icon">📱</div>
+        <div class="empty-text">No transactions yet.<br>Set up your iOS Shortcut to start<br>capturing M-Pesa SMS automatically.<br><br><a href="/setup">View setup guide →</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ BUDGET TAB ══════════════ -->
+  <div id="tab-budget" class="tab-content">
+    <div class="budget-header">
+      <div class="budget-title">BUDGET</div>
+      <select class="period-select" id="budget-period" onchange="loadBudget()">
+        <option value="this_month">This Month</option>
+        <option value="last_month">Last Month</option>
+        <option value="3_months">Last 3 Months</option>
+        <option value="all">All Time</option>
+      </select>
+    </div>
+    <div class="budget-body" id="budget-body">
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <div class="empty-text">No labelled transactions yet.<br>Head to Ledger and label your transactions.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ADVISOR TAB ══════════════ -->
+  <div id="tab-advisor" class="tab-content">
+    <div class="advisor-wrap">
+
+      <div class="advisor-head">
+        <div class="adv-dot"></div>
+        <div class="advisor-title">FINANCIAL ADVISOR</div>
+      </div>
+
+      <div class="period-row">
+        <button class="period-btn active" onclick="setAdvPeriod(this,'this_month')">This Month</button>
+        <button class="period-btn"        onclick="setAdvPeriod(this,'last_month')">Last Month</button>
+        <button class="period-btn"        onclick="setAdvPeriod(this,'3_months')">Last 3 Months</button>
+        <button class="period-btn"        onclick="setAdvPeriod(this,'all')">All Time</button>
+      </div>
+
+      <div class="snap-grid">
+        <div class="snap-card"><div class="snap-label">Total In</div><div class="snap-val" id="sn-in">—</div></div>
+        <div class="snap-card"><div class="snap-label">Total Out</div><div class="snap-val" id="sn-out">—</div></div>
+        <div class="snap-card"><div class="snap-label">Net</div><div class="snap-val" id="sn-net">—</div></div>
+        <div class="snap-card"><div class="snap-label">Top Expense</div><div class="snap-val" id="sn-top">—</div></div>
+        <div class="snap-card"><div class="snap-label">Burn / Day</div><div class="snap-val" id="sn-burn">—</div></div>
+        <div class="snap-card"><div class="snap-label">Savings Rate</div><div class="snap-val" id="sn-save">—</div></div>
+      </div>
+
+      <button class="run-btn" id="run-btn" onclick="runAdvisor()">RUN ANALYSIS</button>
+
+      <div class="adv-output" id="adv-output">
+        <div class="adv-text" id="adv-text"></div>
+      </div>
+      <button class="copy-btn" id="copy-btn" onclick="copyReport()">COPY REPORT</button>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════ LABEL PANEL ══════════════ -->
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="label-panel" id="label-panel">
+  <div class="panel-handle"></div>
+  <div class="panel-header">
+    <div class="panel-title"   id="panel-title">Label Transaction</div>
+    <div class="panel-subtitle" id="panel-sub"></div>
+  </div>
+  <div class="panel-body">
+    <div class="cat-group-label">Needs</div>
+    <div class="cat-grid">
+      <button class="cat-btn" onclick="pickCat(this,'Housing')">Housing</button>
+      <button class="cat-btn" onclick="pickCat(this,'Food')">Food</button>
+      <button class="cat-btn" onclick="pickCat(this,'Transport')">Transport</button>
+      <button class="cat-btn" onclick="pickCat(this,'Utilities &amp; Data')">Utilities &amp; Data</button>
+      <button class="cat-btn" onclick="pickCat(this,'Health')">Health</button>
+    </div>
+    <div class="cat-group-label">Business</div>
+    <div class="cat-grid">
+      <button class="cat-btn" onclick="pickCat(this,'Freelance Income')">Freelance Income</button>
+      <button class="cat-btn" onclick="pickCat(this,'Client Payment')">Client Payment</button>
+      <button class="cat-btn" onclick="pickCat(this,'VPS &amp; Tools')">VPS &amp; Tools</button>
+      <button class="cat-btn" onclick="pickCat(this,'Marketing')">Marketing</button>
+      <button class="cat-btn" onclick="pickCat(this,'Equipment')">Equipment</button>
+    </div>
+    <div class="cat-group-label">Creative</div>
+    <div class="cat-grid">
+      <button class="cat-btn" onclick="pickCat(this,'Studio &amp; Production')">Studio &amp; Production</button>
+      <button class="cat-btn" onclick="pickCat(this,'Music Distribution')">Music Distribution</button>
+      <button class="cat-btn" onclick="pickCat(this,'Creative Tools')">Creative Tools</button>
+    </div>
+    <div class="cat-group-label">Wants</div>
+    <div class="cat-grid">
+      <button class="cat-btn" onclick="pickCat(this,'Social')">Social</button>
+      <button class="cat-btn" onclick="pickCat(this,'Clothing')">Clothing</button>
+      <button class="cat-btn" onclick="pickCat(this,'Impulse')">Impulse</button>
+    </div>
+    <div class="cat-group-label">Savings</div>
+    <div class="cat-grid">
+      <button class="cat-btn" onclick="pickCat(this,'Emergency Fund')">Emergency Fund</button>
+      <button class="cat-btn" onclick="pickCat(this,'Investment')">Investment</button>
+      <button class="cat-btn" onclick="pickCat(this,'SACCO')">SACCO</button>
+    </div>
+    <div class="note-wrap">
+      <div class="note-label">Note (optional)</div>
+      <textarea class="note-input" id="note-input" rows="2" placeholder="Add a note..."></textarea>
+    </div>
+  </div>
+  <div class="panel-actions">
+    <button class="btn-save" onclick="saveLabel()">SAVE</button>
+    <button class="btn-skip" onclick="skipLabel()">SKIP</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── State ─────────────────────────────────────────────
+const S = {
+  txs:          [],
+  totals:       { in: 0, out: 0, net: 0 },
+  dir:          '',
+  cat:          '',
+  activeTx:     null,
+  chosenCat:    null,
+  advPeriod:    'this_month',
+  advRunning:   false,
+  advFull:      '',
+};
+
+// ── Utilities ─────────────────────────────────────────
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmt(n) {
+  if (n == null || isNaN(n)) return '—';
+  return 'KES\u202f' + Number(n).toLocaleString('en-KE', { maximumFractionDigits: 0 });
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString('en-KE', { day:'numeric', month:'short', year:'2-digit' });
+  } catch { return iso.slice(0,10); }
+}
+
+// ── Tabs ──────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector('[data-tab="' + tab + '"]').classList.add('active');
+  if (tab === 'budget')  loadBudget();
+  if (tab === 'advisor') loadSnap();
+}
+
+// ── Ledger ────────────────────────────────────────────
+function setDir(btn, dir) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  S.dir = dir;
+  loadTxs();
+}
+
+function setCat(cat) { S.cat = cat; loadTxs(); }
+
+async function loadTxs() {
+  const p = new URLSearchParams();
+  if (S.dir) p.set('direction', S.dir);
+  if (S.cat) p.set('category',  S.cat);
+  try {
+    const r = await fetch('/api/transactions?' + p);
+    const d = await r.json();
+    S.txs    = d.transactions || [];
+    S.totals = d.totals || { in:0, out:0, net:0 };
+    renderLedger();
+  } catch(e) { console.error(e); }
+}
+
+function renderLedger() {
+  // totals strip
+  document.getElementById('tot-in').textContent  = fmt(S.totals.in);
+  document.getElementById('tot-out').textContent = fmt(S.totals.out);
+  const netEl = document.getElementById('tot-net');
+  netEl.textContent = fmt(S.totals.net);
+  netEl.className   = 'total-value ' + (S.totals.net >= 0 ? 'c-pos' : 'c-neg');
+
+  const list = document.getElementById('tx-list');
+
+  if (!S.txs.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📱</div>
+      <div class="empty-text">No transactions match your filters.<br><br>
+        <a href="/setup">View setup guide →</a></div></div>`;
+    return;
+  }
+
+  const pending  = S.txs.filter(t =>  t.is_pending && !t.parse_failed);
+  const failed   = S.txs.filter(t =>  t.parse_failed);
+  const labelled = S.txs.filter(t => !t.is_pending && !t.parse_failed);
+
+  let html = '';
+
+  if (pending.length) {
+    html += `<div class="section-label">Pending &mdash; ${pending.length} to label</div>`;
+    pending.forEach(t => { html += txCard(t); });
+  }
+
+  if (failed.length) {
+    html += `<div class="section-label">&#9888; Parse failed &mdash; needs review</div>`;
+    failed.forEach(t => { html += txCard(t); });
+  }
+
+  if (labelled.length) {
+    html += `<div class="section-label">Transactions</div>`;
+    labelled.forEach(t => { html += txCard(t); });
+  }
+
+  list.innerHTML = html;
+}
+
+function txCard(t) {
+  const isFail = !!t.parse_failed;
+  const isPend = !!t.is_pending && !isFail;
+  const dirCls = t.direction === 'in' ? 'c-in' : 'c-out';
+
+  let badge = '';
+  if (isFail) {
+    badge = `<span class="badge badge-fail">&#9888; FAILED</span>`;
+  } else if (t.direction === 'in') {
+    badge = `<span class="badge badge-in">IN</span>`;
+  } else {
+    badge = `<span class="badge badge-out">OUT</span>`;
+  }
+
+  const amt = t.amount != null
+    ? `<span class="tx-amount ${isFail ? '' : dirCls}">${fmt(t.amount)}</span>`
+    : '';
+
+  const dot = isPend ? `<span class="pending-dot"></span>` : '';
+
+  const cpty = t.counterparty_name
+    ? `<div class="tx-counterparty">${esc(t.counterparty_name)}</div>` : '';
+
+  let right = '';
+  if (!isPend && !isFail && t.category && t.category !== 'uncategorized') {
+    right = `<span class="tx-cat">${esc(t.category)}</span>`;
+  }
+
+  const note = t.note ? `<div class="tx-note">${esc(t.note)}</div>` : '';
+
+  const rawSms = isFail && t.sms_raw
+    ? `<div class="failed-sms">${esc(t.sms_raw)}</div>` : '';
+
+  const extra = isPend || isFail ? ' is-' + (isFail ? 'failed' : 'pending') : '';
+
+  return `<div class="tx-card${extra}" onclick="openPanel(${t.id})">
+    <div class="tx-row1">${badge}${amt}${dot}</div>
+    ${cpty}
+    <div class="tx-row2">
+      <span class="tx-date">${fmtDate(t.transaction_date)}</span>
+      ${right}
+    </div>
+    ${note}${rawSms}
+  </div>`;
+}
+
+// ── Label panel ───────────────────────────────────────
+function openPanel(id) {
+  const t = S.txs.find(x => x.id === id);
+  if (!t) return;
+  S.activeTx  = t;
+  S.chosenCat = (t.category && t.category !== 'uncategorized') ? t.category : null;
+
+  document.getElementById('panel-title').textContent =
+    t.counterparty_name || (t.parse_failed ? 'Failed Parse' : 'Label Transaction');
+  document.getElementById('panel-sub').textContent =
+    t.amount ? fmt(t.amount) + (t.direction ? ' · ' + t.direction.toUpperCase() : '') : 'Review transaction';
+
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    // compare decoded text to handle &amp; entities
+    const btnCat = b.textContent.trim().replace(/\u00a0/g,' ');
+    b.classList.toggle('selected', btnCat === S.chosenCat);
+  });
+
+  document.getElementById('note-input').value = t.note || '';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('label-panel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('label-panel').classList.remove('open');
+  S.activeTx = null; S.chosenCat = null;
+}
+
+function pickCat(btn, cat) {
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  S.chosenCat = cat;
+}
+
+async function saveLabel() {
+  if (!S.activeTx) return;
+  const body = { is_pending: false };
+  if (S.chosenCat) body.category = S.chosenCat;
+  const note = document.getElementById('note-input').value.trim();
+  if (note) body.note = note;
+  try {
+    const r = await fetch('/api/transactions/' + S.activeTx.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (r.ok) { closePanel(); await loadTxs(); }
+  } catch(e) { console.error(e); }
+}
+
+async function skipLabel() {
+  if (!S.activeTx) return;
+  try {
+    await fetch('/api/transactions/' + S.activeTx.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_pending: false }),
+    });
+  } catch(e) {}
+  closePanel();
+  await loadTxs();
+}
+
+// ── Budget ────────────────────────────────────────────
+const CAT_GROUPS = {
+  Needs:    ['Housing','Food','Transport','Utilities & Data','Health'],
+  Business: ['Freelance Income','Client Payment','VPS & Tools','Marketing','Equipment'],
+  Creative: ['Studio & Production','Music Distribution','Creative Tools'],
+  Wants:    ['Social','Clothing','Impulse'],
+  Savings:  ['Emergency Fund','Investment','SACCO'],
+};
+const GROUP_FILL = { Needs:'needs', Business:'business', Creative:'creative', Wants:'wants', Savings:'savings' };
+
+async function loadBudget() {
+  const period = document.getElementById('budget-period').value;
+  try {
+    const r = await fetch('/api/summary?period=' + period);
+    renderBudget(await r.json());
+  } catch(e) { console.error(e); }
+}
+
+function renderBudget(d) {
+  const body = document.getElementById('budget-body');
+  if (!d.byCategory || !d.byCategory.length) {
+    body.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <div class="empty-text">No labelled data for this period.</div></div>`;
+    return;
+  }
+
+  // Build lookup: category:direction → total
+  const m = {};
+  for (const row of d.byCategory) m[row.category + ':' + row.direction] = row.total;
+
+  const allVals = d.byCategory.map(r => r.total);
+  const maxVal  = Math.max(...allVals, 1);
+
+  let html = '';
+  for (const [grp, cats] of Object.entries(CAT_GROUPS)) {
+    const rows = cats.map(cat => ({
+      cat,
+      val: (m[cat+':out'] || 0) + (m[cat+':in'] || 0),
+    })).filter(r => r.val > 0);
+
+    if (!rows.length) continue;
+
+    const grpTotal = rows.reduce((s,r) => s + r.val, 0);
+    const fill     = GROUP_FILL[grp] || 'other';
+
+    html += `<div class="budget-group">
+      <div class="group-header">
+        <span class="group-name">${grp}</span>
+        <span class="group-total">${fmt(grpTotal)}</span>
+      </div>`;
+
+    for (const row of rows) {
+      const pct  = d.totalIn > 0 ? ((row.val / d.totalIn) * 100).toFixed(1) : 0;
+      const barW = ((row.val / maxVal) * 100).toFixed(1);
+      html += `<div class="bar-row">
+        <div class="bar-meta">
+          <span class="bar-cat">${esc(row.cat)}</span>
+          <span class="bar-amt">${fmt(row.val)}<span class="bar-pct">${pct}%</span></span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill fill-${fill}" style="width:${barW}%"></div>
+        </div>
+      </div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  const pctSpent = d.totalIn > 0 ? ((d.totalOut / d.totalIn) * 100).toFixed(0) : 0;
+  const netColor = d.net >= 0 ? 'var(--green)' : 'var(--danger)';
+  const status   = d.totalIn > 0
+    ? `You spent ${pctSpent}% of what came in this period.`
+    : 'No income recorded for this period.';
+
+  html += `<div class="net-box">
+    <div class="net-row">
+      <span class="net-label">Net Cash Flow</span>
+      <span class="net-value" style="color:${netColor}">${fmt(d.net)}</span>
+    </div>
+    <div class="net-status">${status}</div>
+  </div>`;
+
+  body.innerHTML = html;
+}
+
+// ── Advisor ───────────────────────────────────────────
+function setAdvPeriod(btn, period) {
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  S.advPeriod = period;
+  loadSnap();
+}
+
+async function loadSnap() {
+  try {
+    const r = await fetch('/api/summary?period=' + S.advPeriod);
+    const d = await r.json();
+
+    document.getElementById('sn-in').textContent  = fmt(d.totalIn);
+    document.getElementById('sn-out').textContent = fmt(d.totalOut);
+    const netEl = document.getElementById('sn-net');
+    netEl.textContent  = fmt(d.net);
+    netEl.style.color  = d.net >= 0 ? 'var(--green)' : 'var(--danger)';
+
+    const topExp = (d.byCategory || [])
+      .filter(r => r.direction === 'out')
+      .sort((a,b) => b.total - a.total)[0];
+    document.getElementById('sn-top').textContent = topExp ? topExp.category : '—';
+
+    // burn rate and savings rate come from buildAdvisorSnapshot — not in /summary
+    // so we leave them as — until the advisor runs (they'll appear in the analysis)
+    document.getElementById('sn-burn').textContent = '—';
+    document.getElementById('sn-save').textContent = '—';
+  } catch(e) {}
+}
+
+async function runAdvisor() {
+  if (S.advRunning) return;
+  S.advRunning = true;
+  S.advFull    = '';
+
+  const runBtn  = document.getElementById('run-btn');
+  const output  = document.getElementById('adv-output');
+  const textEl  = document.getElementById('adv-text');
+  const copyBtn = document.getElementById('copy-btn');
+
+  runBtn.disabled    = true;
+  runBtn.textContent = 'ANALYSING...';
+  output.classList.add('visible');
+  copyBtn.classList.remove('visible');
+  textEl.innerHTML = '<span class="cursor"></span>';
+
+  try {
+    const res = await fetch('/api/advisor?period=' + S.advPeriod, { method: 'POST' });
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop(); // incomplete last line
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') {
+          finish();
+          return;
+        }
+        try {
+          const evt = JSON.parse(raw);
+          if (evt.error) {
+            const isKey = evt.error.includes('ANTHROPIC_API_KEY');
+            textEl.innerHTML =
+              `<span class="adv-error">${esc(evt.error)}</span>` +
+              (isKey ? `<br><a href="/setup" class="adv-setup-link">View setup instructions →</a>` : '');
+            done_state();
+            return;
+          }
+          if (evt.text) {
+            S.advFull += evt.text;
+            renderAdvText(true);
+          }
+        } catch(_) {}
+      }
+    }
+    finish();
+  } catch(e) {
+    textEl.innerHTML = `<span class="adv-error">Connection error — is the server running?</span>`;
+    done_state();
+  }
+
+  function finish() {
+    renderAdvText(false);
+    copyBtn.classList.add('visible');
+    done_state();
+  }
+
+  function done_state() {
+    S.advRunning       = false;
+    runBtn.disabled    = false;
+    runBtn.textContent = 'RUN ANALYSIS';
+  }
+}
+
+function renderAdvText(streaming) {
+  const textEl = document.getElementById('adv-text');
+  // Escape first, then convert **HEADER** → styled block span, then newlines → <br>
+  let html = esc(S.advFull)
+    .replace(/\*\*([^*\n]+)\*\*/g, '<span class="sec-head">$1</span>')
+    .replace(/\n/g, '<br>');
+
+  if (streaming) html += '<span class="cursor"></span>';
+  textEl.innerHTML = html;
+
+  // keep bottom of output in view while streaming
+  const out = document.getElementById('adv-output');
+  out.scrollTop = out.scrollHeight;
+}
+
+async function copyReport() {
+  const btn = document.getElementById('copy-btn');
+  try {
+    await navigator.clipboard.writeText(S.advFull);
+  } catch(_) {
+    // Safari fallback
+    const ta = document.createElement('textarea');
+    ta.value = S.advFull;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  btn.textContent = 'COPIED ✓';
+  setTimeout(() => { btn.textContent = 'COPY REPORT'; }, 2000);
+}
+
+// ── Boot ──────────────────────────────────────────────
+loadTxs();
+</script>
+</body>
+</html>

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Setup — M-Pesa Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #0a0a0f;
+      --surface: #0d0d18;
+      --border:  #1a1a2e;
+      --green:   #4ade80;
+      --amber:   #f97316;
+      --purple:  #a78bfa;
+      --blue:    #60a5fa;
+      --warning: #fbbf24;
+      --danger:  #f87171;
+      --text:    #e2e8f0;
+      --muted:   #8892b0;
+      --header:  'Syne', sans-serif;
+      --mono:    'DM Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: var(--mono);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    /* ── NAV ─────────────────────────────────────────── */
+    .nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: var(--header);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--green);
+      letter-spacing: 0.06em;
+      text-decoration: none;
+    }
+
+    .nav-back {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: color 0.15s;
+    }
+
+    .nav-back:hover { color: var(--text); }
+
+    /* ── PAGE ────────────────────────────────────────── */
+    .page {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .page-title {
+      font-family: var(--header);
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+
+    .page-sub {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    /* ── SECTIONS ────────────────────────────────────── */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--border);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-family: var(--header);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* ── STEPS ───────────────────────────────────────── */
+    .steps { display: flex; flex-direction: column; gap: 10px; }
+
+    .step {
+      display: flex;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+
+    .step-n {
+      font-size: 11px;
+      color: var(--muted);
+      padding-top: 2px;
+      flex-shrink: 0;
+      width: 18px;
+    }
+
+    .step-body { flex: 1; }
+
+    .step-head {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 5px;
+      line-height: 1.4;
+    }
+
+    .step-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .step-action {
+      display: inline-block;
+      margin-top: 8px;
+      background: var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 11px;
+      color: var(--text);
+      font-family: var(--mono);
+      word-break: break-all;
+    }
+
+    .step-action.green { color: var(--green); }
+    .step-action.blue  { color: var(--blue);  }
+    .step-action.amber { color: var(--amber); }
+
+    .tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      background: rgba(96,165,250,0.1);
+      color: var(--blue);
+      border: 1px solid rgba(96,165,250,0.2);
+      vertical-align: middle;
+    }
+
+    /* ── CODE BLOCK ──────────────────────────────────── */
+    .code-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      font-size: 12px;
+      line-height: 1.8;
+      color: var(--text);
+      overflow-x: auto;
+      white-space: pre;
+      margin-top: 8px;
+    }
+
+    .code-block .k { color: var(--blue);   } /* key    */
+    .code-block .v { color: var(--green);  } /* value  */
+    .code-block .c { color: var(--muted);  } /* comment*/
+    .code-block .h { color: var(--amber);  } /* header */
+
+    /* ── NOTE BOX ────────────────────────────────────── */
+    .note {
+      background: rgba(251,191,36,0.05);
+      border: 1px solid rgba(251,191,36,0.2);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--warning);
+      line-height: 1.6;
+      margin-top: 14px;
+    }
+
+    .note strong { color: var(--text); }
+
+    .tip {
+      background: rgba(74,222,128,0.05);
+      border: 1px solid rgba(74,222,128,0.2);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--green);
+      line-height: 1.6;
+      margin-top: 14px;
+    }
+
+    /* ── APP URL ─────────────────────────────────────── */
+    #app-url {
+      color: var(--green);
+      font-weight: 500;
+    }
+
+    /* ── DIVIDER ─────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 40px 0;
+    }
+
+    /* ── SCROLLBAR ───────────────────────────────────── */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">M-PESA</a>
+  <a href="/"  class="nav-back">← Dashboard</a>
+</nav>
+
+<div class="page">
+  <div class="page-title">Setup Guide</div>
+  <div class="page-sub">
+    Get your M-Pesa transactions flowing into the tracker automatically.
+    Two things to configure: the iOS Shortcut and your API keys.
+  </div>
+
+  <!-- ══════════════ SECTION 1: iOS Shortcut ══════════════ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="dot"></div>
+      iOS Shortcut — Auto-capture M-Pesa SMS
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px;">
+      This Shortcut runs automatically every time you receive an SMS from MPESA.
+      It reads the message body and POSTs it to your tracker in the background —
+      no manual action needed.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <div class="step-head">Open the Shortcuts app and tap <span class="tag">Automation</span></div>
+          <div class="step-desc">Tap the <strong>+</strong> button (top right) to create a new automation.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <div class="step-head">Choose trigger: <span class="tag">Message</span></div>
+          <div class="step-desc">
+            Scroll down and select <strong>Message</strong> as the trigger.<br>
+            Set <strong>From</strong> to: <span class="step-action">MPESA</span><br>
+            Toggle <strong>"Run Immediately"</strong> ON (so it fires without asking).
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <div class="step-head">Add action: <span class="tag">Get Contents of Shortcut Input</span></div>
+          <div class="step-desc">
+            Tap <strong>Add Action</strong>, search for <strong>"Shortcut Input"</strong>,
+            and add <strong>Get Contents of Shortcut Input</strong>.
+            This captures the incoming message object.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <div class="step-head">Add action: <span class="tag">Get Body of Message</span></div>
+          <div class="step-desc">
+            Search for <strong>"Body"</strong> and add <strong>Get Body of [Message]</strong>.
+            Use the Shortcut Input result from the previous step as the input.
+            This extracts the raw SMS text.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">05</div>
+        <div class="step-body">
+          <div class="step-head">Add action: <span class="tag">Get Contents of URL</span> (HTTP request)</div>
+          <div class="step-desc">
+            Search for <strong>"URL"</strong> and add <strong>Get Contents of URL</strong>.<br><br>
+            Configure it as follows:
+            <div class="step-action green" id="app-url-display">https://mpesa.smartshamba.io/api/sms</div>
+            <br>
+            <strong>Method:</strong> <span class="step-action">POST</span><br><br>
+            <strong>Request Body:</strong> <span class="tag">JSON</span><br>
+            Add one key-value pair:
+            <div class="step-action blue">sms → Body (from step 04)</div>
+            <br>
+            <strong>Headers:</strong> Add one header:
+            <div class="step-action amber">X-API-Secret → &lt;your API_SECRET from .env&gt;</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">06</div>
+        <div class="step-body">
+          <div class="step-head">(Optional) Add action: <span class="tag">Open URLs</span></div>
+          <div class="step-desc">
+            Add <strong>Open URLs</strong> and enter your dashboard URL to jump straight
+            to the app after a transaction is captured.
+            <div class="step-action green" id="app-url-dash">https://mpesa.smartshamba.io</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">07</div>
+        <div class="step-body">
+          <div class="step-head">Tap <span class="tag">Done</span> and test it</div>
+          <div class="step-desc">
+            Send yourself a test M-Pesa SMS (or ask someone to send KES 1).
+            The automation should fire silently and the transaction should appear
+            in your Ledger tab within seconds.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Tip:</strong> iOS will ask for permission to run the automation the first time.
+      Tap <strong>Allow</strong>. After that, it runs silently in the background forever.
+    </div>
+
+    <div class="tip">
+      <strong>Test without a real SMS:</strong> You can POST a sample message directly to verify
+      your setup is working:<br><br>
+      <code>curl -X POST https://mpesa.smartshamba.io/api/sms \<br>
+      &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+      &nbsp;&nbsp;-H "X-API-Secret: YOUR_SECRET" \<br>
+      &nbsp;&nbsp;-d '{"sms":"QK58XXXXX Confirmed. KES1,500.00 sent to JOHN DOE 0712345678 on 10/4/24 at 2:30 PM. New M-PESA balance is Ksh8,500.00."}'</code>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════ SECTION 2: Anthropic API Key ══════════════ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="dot"></div>
+      Add your Anthropic API Key
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px;">
+      The AI Advisor uses Claude. Without a key it will show an error — everything else
+      works fine. Get a key at <strong style="color:var(--text)">console.anthropic.com</strong>.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <div class="step-head">SSH into your VPS</div>
+          <div class="step-action">ssh -p 2222 user@your-vps-ip</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <div class="step-head">Edit the <code>.env</code> file in the app directory</div>
+          <div class="step-action">nano ~/mpesa-tracker/.env</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <div class="step-head">Set your keys</div>
+          <div class="step-desc">Your <code>.env</code> should contain:</div>
+<pre class="code-block"><span class="k">ANTHROPIC_API_KEY</span>=<span class="v">sk-ant-api03-...</span>
+<span class="k">API_SECRET</span>=<span class="v">a-long-random-string-you-choose</span>
+<span class="k">APP_URL</span>=<span class="v">https://mpesa.smartshamba.io</span>
+<span class="k">PORT</span>=<span class="v">3000</span></pre>
+          <div class="step-desc" style="margin-top:8px">
+            Save with <strong>Ctrl+O</strong>, exit with <strong>Ctrl+X</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-body">
+          <div class="step-head">Restart the app to apply changes</div>
+          <div class="step-action">pm2 restart mpesa-tracker</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Never commit .env to git.</strong> The <code>.env.example</code> file has
+      empty placeholders — that one is safe to commit. Your actual <code>.env</code> is
+      already in <code>.gitignore</code>.
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ══════════════ SECTION 3: Verify ══════════════ -->
+  <div class="section">
+    <div class="section-title">
+      <div class="dot"></div>
+      Verify Everything is Running
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-body">
+          <div class="step-head">Check PM2 process status</div>
+          <div class="step-action">pm2 status</div>
+          <div class="step-desc" style="margin-top:8px">
+            You should see <strong>mpesa-tracker</strong> with status <strong style="color:var(--green)">online</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-body">
+          <div class="step-head">Check the logs</div>
+          <div class="step-action">pm2 logs mpesa-tracker --lines 20</div>
+          <div class="step-desc" style="margin-top:8px">
+            Should show <strong style="color:var(--green)">✓ mpesa-tracker running</strong> on startup.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-body">
+          <div class="step-head">Test the SMS endpoint</div>
+          <div class="step-action" style="white-space:pre-wrap">curl -s -X POST <span id="test-url">https://mpesa.smartshamba.io/api/sms</span> \
+  -H "Content-Type: application/json" \
+  -H "X-API-Secret: YOUR_SECRET" \
+  -d '{"sms":"Test"}'</div>
+          <div class="step-desc" style="margin-top:8px">
+            Returns JSON with the parsed (or failed) transaction.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>All good?</strong> Head back to the <a href="/" style="color:var(--green)">Dashboard →</a>
+      and wait for your first real M-Pesa SMS to come in.
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Replace placeholder URLs with the actual app URL (current origin)
+  const origin = window.location.origin;
+  const els = document.querySelectorAll('[id$="-url"], [id$="-url-display"], [id$="-url-dash"]');
+
+  document.getElementById('app-url-display').textContent = origin + '/api/sms';
+  document.getElementById('app-url-dash').textContent    = origin;
+  document.getElementById('test-url').textContent        = origin + '/api/sms';
+</script>
+</body>
+</html>
