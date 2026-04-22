@@ -243,13 +243,23 @@ function buildAdvisorSnapshot(period = 'this_month') {
 
   const txCount = db.prepare(`SELECT COUNT(*) AS v FROM transactions WHERE parse_failed=0 ${base}`).get(...params).v;
 
+  // Carry-forward: net before this period
+  let carryForward = 0;
+  if (from) {
+    const prevIn  = db.prepare(`SELECT COALESCE(SUM(amount),0) AS v FROM transactions WHERE direction='in'  AND parse_failed=0 AND transaction_date < ?`).get(from).v;
+    const prevOut = db.prepare(`SELECT COALESCE(SUM(amount),0) AS v FROM transactions WHERE direction='out' AND parse_failed=0 AND transaction_date < ?`).get(from).v;
+    carryForward  = prevIn - prevOut;
+  }
+
   return {
     period,
     dateRange: { from: from || 'all time', to: to || 'now' },
     summary: {
+      openingBalance: carryForward,
       totalIn,
       totalOut,
       net: totalIn - totalOut,
+      closingBalance: carryForward + totalIn - totalOut,
       txCount,
       dailyBurnRate: days > 0 ? +(totalOut / days).toFixed(0) : 0,
       savingsRate: totalIn > 0 ? +((savingsTotal / totalIn) * 100).toFixed(1) : 0,
