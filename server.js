@@ -53,7 +53,8 @@ app.post('/api/sms', requireSecret, (req, res) => {
 
   const parsed = parseTransaction(sms);
   const tx = insertTransaction(parsed);
-  res.status(201).json(tx);
+  const appUrl = process.env.APP_URL || `http://localhost:${PORT}`;
+  res.status(201).send(`${appUrl}/label/${tx.id}`);
 });
 
 // GET /api/transactions
