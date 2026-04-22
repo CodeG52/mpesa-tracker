@@ -7,7 +7,7 @@ const path     = require('path');
 const os       = require('os');
 
 const { parseTransaction }                                            = require('./parser');
-const { insertTransaction, getTransactions, updateTransaction, getSummary } = require('./db');
+const { insertTransaction, getTransactionById, getTransactions, updateTransaction, getSummary } = require('./db');
 const { streamAdvisor }                                               = require('./advisor');
 
 const app  = express();
@@ -39,6 +39,11 @@ app.get('/setup', (_req, res) =>
   res.sendFile(path.join(__dirname, 'setup', 'index.html'))
 );
 
+// Deep-link: open app with label panel pre-opened for a specific transaction
+app.get('/label/:id', (_req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'index.html'))
+);
+
 // POST /api/sms  — iOS Shortcut pushes raw SMS here
 app.post('/api/sms', requireSecret, (req, res) => {
   const { sms } = req.body || {};
@@ -64,6 +69,15 @@ app.get('/api/transactions', (req, res) => {
 
   const result = getTransactions(filters);
   res.json(result);
+});
+
+// GET /api/transactions/:id
+app.get('/api/transactions/:id', (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ error: 'Invalid id' });
+  const tx = getTransactionById(id);
+  if (!tx) return res.status(404).json({ error: 'Not found' });
+  res.json(tx);
 });
 
 // PATCH /api/transactions/:id

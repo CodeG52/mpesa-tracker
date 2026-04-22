@@ -1412,7 +1412,24 @@ async function copyReport() {
 }
 
 // ── Boot ──────────────────────────────────────────────
-loadTxs();
+(async function boot() {
+  await loadTxs();
+
+  const m = location.pathname.match(/^\/label\/(\d+)$/);
+  if (!m) return;
+
+  const targetId = parseInt(m[1], 10);
+  history.replaceState(null, '', '/');
+
+  let tx = S.txs.find(x => x.id === targetId);
+  if (!tx) {
+    try {
+      const r = await fetch('/api/transactions/' + targetId);
+      if (r.ok) { tx = await r.json(); S.txs.unshift(tx); }
+    } catch(_) {}
+  }
+  if (tx) openPanel(targetId);
+})();
 </script>
 </body>
 </html>
