@@ -45,7 +45,7 @@ app.get('/label/:id', (_req, res) =>
 );
 
 // POST /api/sms  — iOS Shortcut pushes raw SMS here
-app.post('/api/sms', requireSecret, (req, res) => {
+app.post('/api/sms', requireSecret, async (req, res) => {
   const { sms } = req.body || {};
   if (!sms || typeof sms !== 'string') {
     return res.status(400).json({ error: 'Missing "sms" field in request body' });
@@ -54,7 +54,28 @@ app.post('/api/sms', requireSecret, (req, res) => {
   const parsed = parseTransaction(sms);
   const tx = insertTransaction(parsed);
   const appUrl = process.env.APP_URL || `http://localhost:${PORT}`;
-  res.status(201).send(`${appUrl}/label/${tx.id}`);
+  const labelUrl = `${appUrl}/label/${tx.id}`;
+
+  // Push notification via ntfy.sh
+  const topic = process.env.NTFY_TOPIC;
+  if (topic) {
+    const sign  = tx.direction === 'in' ? '+' : '-';
+    const amt   = tx.amount ? `${sign}KES ${Number(tx.amount).toLocaleString()}` : 'New transaction';
+    const title = tx.counterparty_name || 'M-Pesa Transaction';
+    fetch(`https://ntfy.sh/${topic}`, {
+      method: 'POST',
+      headers: {
+        'Title':    title,
+        'Tags':     tx.direction === 'in' ? 'green_circle' : 'red_circle',
+        'Priority': 'high',
+        'Click':    labelUrl,
+        'Actions':  `view, Label it, ${labelUrl}, clear=true`,
+      },
+      body: amt,
+    }).catch(e => console.error('[ntfy]', e.message));
+  }
+
+  res.status(201).send(labelUrl);
 });
 
 // GET /api/transactions
