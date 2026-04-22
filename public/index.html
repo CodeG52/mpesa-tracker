@@ -511,6 +511,21 @@
 
     .budget-body { padding: 16px; }
 
+    /* ── LEDGER TABLE ────────────────────────────── */
+
+    .ledger-table {
+      margin: 0 16px 24px;
+      width: calc(100% - 32px);
+    }
+
+    .tx-td-date  { color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .tx-td-cpty  { font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tx-td-cat   { font-size: 11px; color: var(--muted); }
+    .muted       { color: var(--muted); }
+
+    .data-row { cursor: pointer; }
+    .data-row:hover td { background: rgba(255,255,255,0.03); }
+
     /* ── STATEMENT SUMMARY ───────────────────────── */
 
     .stmt-summary {
@@ -1078,8 +1093,17 @@ function renderLedger() {
   }
 
   if (labelled.length) {
-    html += `<div class="section-label">Transactions</div>`;
-    labelled.forEach(t => { html += txCard(t); });
+    html += `<div class="section-label">Transactions</div>
+    <table class="stmt-table ledger-table">
+      <thead><tr>
+        <th>Date</th>
+        <th>Counterparty</th>
+        <th>Category</th>
+        <th class="col-num">In</th>
+        <th class="col-num">Out</th>
+      </tr></thead>
+      <tbody>${txTableRows(labelled)}</tbody>
+    </table>`;
   }
 
   list.innerHTML = html;
@@ -1087,7 +1111,6 @@ function renderLedger() {
 
 function txCard(t) {
   const isFail = !!t.parse_failed;
-  const isPend = !!t.is_pending && !isFail;
   const dirCls = t.direction === 'in' ? 'c-in' : 'c-out';
 
   let badge = '';
@@ -1103,32 +1126,35 @@ function txCard(t) {
     ? `<span class="tx-amount ${isFail ? '' : dirCls}">${fmt(t.amount)}</span>`
     : '';
 
-  const dot = isPend ? `<span class="pending-dot"></span>` : '';
-
   const cpty = t.counterparty_name
     ? `<div class="tx-counterparty">${esc(t.counterparty_name)}</div>` : '';
-
-  let right = '';
-  if (!isPend && !isFail && t.category && t.category !== 'uncategorized') {
-    right = `<span class="tx-cat">${esc(t.category)}</span>`;
-  }
-
-  const note = t.note ? `<div class="tx-note">${esc(t.note)}</div>` : '';
 
   const rawSms = isFail && t.sms_raw
     ? `<div class="failed-sms">${esc(t.sms_raw)}</div>` : '';
 
-  const extra = isPend || isFail ? ' is-' + (isFail ? 'failed' : 'pending') : '';
+  const extra = isFail ? ' is-failed' : ' is-pending';
 
   return `<div class="tx-card${extra}" onclick="openPanel(${t.id})">
-    <div class="tx-row1">${badge}${amt}${dot}</div>
+    <div class="tx-row1">${badge}${amt}<span class="pending-dot"></span></div>
     ${cpty}
-    <div class="tx-row2">
-      <span class="tx-date">${fmtDate(t.transaction_date)}</span>
-      ${right}
-    </div>
-    ${note}${rawSms}
+    <div class="tx-row2"><span class="tx-date">${fmtDate(t.transaction_date)}</span></div>
+    ${rawSms}
   </div>`;
+}
+
+function txTableRows(txs) {
+  return txs.map(t => {
+    const inAmt  = t.direction === 'in'  ? `<span class="c-in">${fmt(t.amount)}</span>`  : '';
+    const outAmt = t.direction === 'out' ? `<span class="c-out">${fmt(t.amount)}</span>` : '';
+    const cat    = (t.category && t.category !== 'uncategorized') ? esc(t.category) : '<span class="muted">—</span>';
+    return `<tr class="data-row" onclick="openPanel(${t.id})">
+      <td class="tx-td-date">${fmtDate(t.transaction_date)}</td>
+      <td class="tx-td-cpty">${esc(t.counterparty_name || '—')}</td>
+      <td class="tx-td-cat">${cat}</td>
+      <td class="col-num">${inAmt}</td>
+      <td class="col-num">${outAmt}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ── Label panel ───────────────────────────────────────
