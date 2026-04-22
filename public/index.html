@@ -480,6 +480,25 @@
 
     .btn-skip:active { background: var(--border); }
 
+    .btn-delete {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(248,113,113,0.3);
+      background: transparent;
+      color: var(--danger);
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      align-self: center;
+    }
+
+    .btn-delete:active { background: rgba(248,113,113,0.1); }
+
     /* ── BUDGET ──────────────────────────────────────── */
 
     .budget-header {
@@ -518,9 +537,9 @@
       width: calc(100% - 32px);
     }
 
-    .tx-td-date  { color: var(--muted); font-size: 11px; white-space: nowrap; }
-    .tx-td-cpty  { font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tx-td-cat   { font-size: 11px; color: var(--muted); }
+    .tx-td-date   { color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .tx-td-cat    { font-size: 12px; }
+    .tx-td-sender { font-size: 10px; color: var(--muted); margin-top: 2px; }
     .muted       { color: var(--muted); }
 
     .data-row { cursor: pointer; }
@@ -980,6 +999,10 @@
       <button class="cat-btn" onclick="pickCat(this,'SACCO')">SACCO</button>
     </div>
     <div class="note-wrap">
+      <div class="note-label">Custom category (overrides selection above)</div>
+      <input class="note-input" id="custom-cat-input" type="text" placeholder="e.g. Rent, School Fees..." oninput="onCustomCat(this.value)">
+    </div>
+    <div class="note-wrap">
       <div class="note-label">Note (optional)</div>
       <textarea class="note-input" id="note-input" rows="2" placeholder="Add a note..."></textarea>
     </div>
@@ -987,6 +1010,7 @@
   <div class="panel-actions">
     <button class="btn-save" onclick="saveLabel()">SAVE</button>
     <button class="btn-skip" onclick="skipLabel()">SKIP</button>
+    <button class="btn-delete" onclick="deleteTransaction()">DELETE</button>
   </div>
 </div>
 
@@ -1097,7 +1121,6 @@ function renderLedger() {
     <table class="stmt-table ledger-table">
       <thead><tr>
         <th>Date</th>
-        <th>Counterparty</th>
         <th>Category</th>
         <th class="col-num">In</th>
         <th class="col-num">Out</th>
@@ -1147,10 +1170,10 @@ function txTableRows(txs) {
     const inAmt  = t.direction === 'in'  ? `<span class="c-in">${fmt(t.amount)}</span>`  : '';
     const outAmt = t.direction === 'out' ? `<span class="c-out">${fmt(t.amount)}</span>` : '';
     const cat    = (t.category && t.category !== 'uncategorized') ? esc(t.category) : '<span class="muted">—</span>';
+    const sender = t.counterparty_name ? `<div class="tx-td-sender">${esc(t.counterparty_name)}</div>` : '';
     return `<tr class="data-row" onclick="openPanel(${t.id})">
       <td class="tx-td-date">${fmtDate(t.transaction_date)}</td>
-      <td class="tx-td-cpty">${esc(t.counterparty_name || '—')}</td>
-      <td class="tx-td-cat">${cat}</td>
+      <td class="tx-td-cat">${cat}${sender}</td>
       <td class="col-num">${inAmt}</td>
       <td class="col-num">${outAmt}</td>
     </tr>`;
@@ -1175,6 +1198,7 @@ function openPanel(id) {
     b.classList.toggle('selected', btnCat === S.chosenCat);
   });
 
+  document.getElementById('custom-cat-input').value = '';
   document.getElementById('note-input').value = t.note || '';
   document.getElementById('overlay').classList.add('open');
   document.getElementById('label-panel').classList.add('open');
@@ -1190,6 +1214,14 @@ function pickCat(btn, cat) {
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   S.chosenCat = cat;
+  document.getElementById('custom-cat-input').value = '';
+}
+
+function onCustomCat(val) {
+  if (val.trim()) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+    S.chosenCat = val.trim();
+  }
 }
 
 async function saveLabel() {
@@ -1219,6 +1251,16 @@ async function skipLabel() {
   } catch(e) {}
   closePanel();
   await loadTxs();
+}
+
+async function deleteTransaction() {
+  if (!S.activeTx) return;
+  if (!confirm('Delete this transaction? This cannot be undone.')) return;
+  try {
+    await fetch('/api/transactions/' + S.activeTx.id, { method: 'DELETE' });
+    closePanel();
+    await loadTxs();
+  } catch(e) { console.error(e); }
 }
 
 // ── Budget ────────────────────────────────────────────

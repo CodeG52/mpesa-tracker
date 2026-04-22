@@ -7,7 +7,7 @@ const path     = require('path');
 const os       = require('os');
 
 const { parseTransaction }                                            = require('./parser');
-const { insertTransaction, getTransactionById, getTransactions, updateTransaction, getSummary } = require('./db');
+const { insertTransaction, getTransactionById, getTransactions, updateTransaction, deleteTransaction, getSummary } = require('./db');
 const { streamAdvisor }                                               = require('./advisor');
 
 const app  = express();
@@ -116,6 +116,14 @@ app.patch('/api/transactions/:id', (req, res) => {
   const tx = updateTransaction(id, updates);
   if (!tx) return res.status(404).json({ error: 'Transaction not found' });
   res.json(tx);
+});
+
+// DELETE /api/transactions/:id
+app.delete('/api/transactions/:id', (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ error: 'Invalid id' });
+  deleteTransaction(id);
+  res.status(204).end();
 });
 
 // GET /api/summary

@@ -125,6 +125,10 @@ function updateTransaction(id, updates) {
   return getTransactionById(id);
 }
 
+function deleteTransaction(id) {
+  db.prepare('DELETE FROM transactions WHERE id = ?').run(id);
+}
+
 // ── SUMMARY ──────────────────────────────────────────────────────────────────
 
 function getSummary(period = 'this_month') {
@@ -267,6 +271,7 @@ module.exports = {
   getTransactionById,
   getTransactions,
   updateTransaction,
+  deleteTransaction,
   getSummary,
   buildAdvisorSnapshot,
 };
