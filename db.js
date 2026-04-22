@@ -141,11 +141,21 @@ function getSummary(period = 'this_month') {
     GROUP BY category, direction ORDER BY total DESC
   `).all(...params);
 
+  // Carry-forward: net of all transactions strictly before this period
+  let carryForward = 0;
+  if (from) {
+    const prevIn  = db.prepare(`SELECT COALESCE(SUM(amount),0) AS v FROM transactions WHERE direction='in'  AND parse_failed=0 AND transaction_date < ?`).get(from).v;
+    const prevOut = db.prepare(`SELECT COALESCE(SUM(amount),0) AS v FROM transactions WHERE direction='out' AND parse_failed=0 AND transaction_date < ?`).get(from).v;
+    carryForward  = prevIn - prevOut;
+  }
+
   return {
     period,
+    carryForward,
     totalIn,
     totalOut,
     net: totalIn - totalOut,
+    closingBalance: carryForward + totalIn - totalOut,
     byCategory,
   };
 }

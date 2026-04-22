@@ -1255,10 +1255,15 @@ function renderBudget(d) {
     catMap[row.category][row.direction] = (catMap[row.category][row.direction] || 0) + row.total;
   }
 
-  const balColor = d.net >= 0 ? 'var(--green)' : 'var(--danger)';
+  const closingColor = d.closingBalance >= 0 ? 'var(--green)' : 'var(--danger)';
 
   let html = `
     <div class="stmt-summary">
+      ${d.carryForward !== 0 ? `
+      <div class="stmt-kv">
+        <span class="stmt-k">Opening Balance</span>
+        <span class="stmt-v" style="color:${d.carryForward >= 0 ? 'var(--green)' : 'var(--danger)'}">${fmt(d.carryForward)}</span>
+      </div>` : ''}
       <div class="stmt-kv">
         <span class="stmt-k">Income</span>
         <span class="stmt-v c-in">${fmt(d.totalIn)}</span>
@@ -1268,8 +1273,8 @@ function renderBudget(d) {
         <span class="stmt-v c-out">${fmt(d.totalOut)}</span>
       </div>
       <div class="stmt-kv stmt-balance">
-        <span class="stmt-k">Balance</span>
-        <span class="stmt-v" style="color:${balColor}">${fmt(d.net)}</span>
+        <span class="stmt-k">Closing Balance</span>
+        <span class="stmt-v" style="color:${closingColor}">${fmt(d.closingBalance)}</span>
       </div>
     </div>
     <table class="stmt-table">
