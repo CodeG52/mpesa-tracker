@@ -1236,7 +1236,11 @@ async function saveLabel() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (r.ok) { closePanel(); await loadTxs(); }
+    if (r.ok) {
+      closePanel();
+      await loadTxs();
+      if (document.getElementById('tab-budget').classList.contains('active')) loadBudget();
+    }
   } catch(e) { console.error(e); }
 }
 
@@ -1488,6 +1492,19 @@ async function copyReport() {
   btn.textContent = 'COPIED ✓';
   setTimeout(() => { btn.textContent = 'COPY REPORT'; }, 2000);
 }
+
+// ── Auto-refresh ──────────────────────────────────────
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    loadTxs();
+    if (document.getElementById('tab-budget').classList.contains('active')) loadBudget();
+    if (document.getElementById('tab-advisor').classList.contains('active')) loadSnap();
+  }
+});
+
+setInterval(() => {
+  if (!document.hidden) loadTxs();
+}, 30000);
 
 // ── Boot ──────────────────────────────────────────────
 (async function boot() {
